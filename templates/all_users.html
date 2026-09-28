@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">Fit<span>Buddy</span></div>
+      </a>
+      <div class="nav-links">
+        <span class="badge {% if api_configured %}badge-live{% else %}badge-mock{% endif %}">
+          <span class="badge-pulse"></span>
+          {{ api_status }}
+        </span>
+        <a href="/" class="nav-link">Home</a>
+        <a href="/view-all-users" class="nav-link active">Admin Dashboard</a>
+        <a href="/docs" target="_blank" class="nav-link">API Docs ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+
+    <!-- Dashboard Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: #ffffff;">
+          Admin & Training <span class="gradient-text">Dashboard</span>
+        </h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Directory of registered athletes, generated 7-day programs, nutrition protocols, and feedback revisions.
+        </p>
+      </div>
+      <div>
+        <a href="/" class="btn btn-primary">
+          <span>➕</span> Generate New Plan
+        </a>
+      </div>
+    </div>
+
+    <!-- Metric Overview Cards -->
+    <section class="stats-grid">
+      <div class="stat-metric-card">
+        <div class="stat-icon emerald">👥</div>
+        <div>
+          <div class="stat-number">{{ stats.total_users }}</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+      </div>
+      <div class="stat-metric-card">
+        <div class="stat-icon cyan">🔄</div>
+        <div>
+          <div class="stat-number">{{ stats.updated_count }}</div>
+          <div class="stat-label">Revisions Applied</div>
+        </div>
+      </div>
+      <div class="stat-metric-card">
+        <div class="stat-icon amber">🎯</div>
+        <div>
+          <div class="stat-number" style="font-size: 1.15rem;">{{ stats.popular_goal }}</div>
+          <div class="stat-label">Top Fitness Goal</div>
+        </div>
+      </div>
+      <div class="stat-metric-card">
+        <div class="stat-icon purple">📊</div>
+        <div>
+          <div class="stat-number">{{ stats.avg_age }} yrs</div>
+          <div class="stat-label">Average Age</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filter & Search Toolbar -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+      <input
+        type="text"
+        id="tableSearch"
+        placeholder="🔍 Search by name or user ID..."
+        style="max-width: 320px;"
+        oninput="filterTable()"
+      >
+      <select id="goalFilter" style="max-width: 220px;" onchange="filterTable()">
+        <option value="">All Goals</option>
+        <option value="Weight Loss">Weight Loss</option>
+        <option value="Muscle Gain">Muscle Gain</option>
+        <option value="General Wellness">General Wellness</option>
+        <option value="Flexibility">Flexibility</option>
+      </select>
+    </div>
+
+    <!-- Users Table -->
+    {% if users %}
+    <div class="table-responsive">
+      <table class="data-table" id="usersTable">
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Athlete Name</th>
+            <th>Age / Weight</th>
+            <th>Fitness Goal</th>
+            <th>Intensity</th>
+            <th>Plan Status</th>
+            <th>Created Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr data-name="{{ u.username.lower() }}" data-userid="{{ u.user_id.lower() }}" data-goal="{{ u.goal }}">
+            <td>
+              <code style="color: var(--accent-primary); background: var(--bg-surface-elevated); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-weight: 600;">
+                {{ u.user_id }}
+              </code>
+            </td>
+            <td>
+              <strong style="color: #ffffff;">{{ u.username }}</strong>
+            </td>
+            <td>
+              {{ u.age }} yrs / {{ u.weight }} kg
+            </td>
+            <td>
+              <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-primary);">
+                {{ u.goal }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: var(--accent-secondary);">
+                {{ u.intensity }}
+              </span>
+            </td>
+            <td>
+              {% if u.updated_plan %}
+                <span class="badge" style="background: rgba(6, 182, 212, 0.2); color: var(--accent-secondary); border: 1px solid var(--accent-secondary);">
+                  ✓ Revised Plan
+                </span>
+              {% else %}
+                <span class="badge" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted);">
+                  Original Only
+                </span>
+              {% endif %}
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.85rem;">
+              {{ u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else 'N/A' }}
+            </td>
+            <td>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                style="padding: 0.35rem 0.75rem; font-size: 0.82rem;"
+                onclick="openPlanModal('{{ u.id }}')"
+              >
+                Inspect Plan ↗
+              </button>
+
+              <!-- Hidden container for modal content -->
+              <div id="modal-data-{{ u.id }}" style="display: none;">
+                <div class="user-header">
+                  <h3>{{ u.username }} (<code>{{ u.user_id }}</code>)</h3>
+                  <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    Goal: <strong style="color: var(--accent-primary);">{{ u.goal }}</strong> | Intensity: <strong>{{ u.intensity }}</strong> | {{ u.age }} yrs, {{ u.weight }} kg
+                  </p>
+                </div>
+
+                <!-- Nutrition Tip -->
+                <div class="nutrition-card" style="margin: 1rem 0;">
+                  <div class="nutrition-title">🥗 Nutrition & Recovery Guidance</div>
+                  <div class="markdown-body">{{ u.nutrition_tip | markdown | safe }}</div>
+                </div>
+
+                <!-- Revised Plan if present -->
+                {% if u.updated_plan %}
+                <div class="plan-card revised" style="margin-bottom: 1.5rem;">
+                  <div class="plan-badge-wrapper">
+                    <div class="plan-heading" style="color: var(--accent-secondary); font-size: 1.3rem;">
+                      ⚡ REVISED WORKOUT PLAN
+                    </div>
+                    <span class="badge" style="background: rgba(6, 182, 212, 0.2); color: var(--accent-secondary);">
+                      Feedback Applied
+                    </span>
+                  </div>
+                  {% if u.feedback %}
+                  <div style="background: rgba(18, 26, 47, 0.9); border-left: 3px solid var(--accent-secondary); padding: 0.6rem 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Feedback Prompt:</div>
+                    <div style="font-style: italic; color: #fff;">"{{ u.feedback }}"</div>
+                  </div>
+                  {% endif %}
+                  <div class="markdown-body">{{ u.updated_plan | markdown | safe }}</div>
+                </div>
+                {% endif %}
+
+                <!-- Baseline Original Plan -->
+                <div class="plan-card">
+                  <div class="plan-badge-wrapper">
+                    <div class="plan-heading" style="font-size: 1.3rem;">
+                      📜 BASELINE 7-DAY PLAN
+                    </div>
+                  </div>
+                  <div class="markdown-body">{{ u.original_plan | markdown | safe }}</div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="card" style="text-align: center; padding: 4rem 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🏋️</div>
+      <h3 style="font-size: 1.4rem; color: #fff; margin-bottom: 0.5rem;">No Workout Plans Found Yet</h3>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem; max-width: 480px; margin-left: auto; margin-right: auto;">
+        Generate your first personalized 7-day fitness routine on the home page.
+      </p>
+      <a href="/" class="btn btn-primary">Create First Plan</a>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Interactive Modal Viewer for Plans -->
+  <div id="planModal" class="modal-overlay" onclick="closePlanModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modalTitle" style="color: #ffffff; font-size: 1.25rem;">Athlete Workout Dossier</h3>
+        <button class="modal-close" onclick="closePlanModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalContent">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>FitBuddy – AI Fitness Plan Generator &copy; 2026. Built with FastAPI, SQLite, and Google Gemini.</p>
+    </div>
+  </footer>
+
+  <script>
+    function filterTable() {
+      const search = document.getElementById('tableSearch').value.toLowerCase();
+      const goal = document.getElementById('goalFilter').value;
+      const rows = document.querySelectorAll('#usersTable tbody tr');
+
+      rows.forEach(row => {
+        const name = row.getAttribute('data-name');
+        const userId = row.getAttribute('data-userid');
+        const rowGoal = row.getAttribute('data-goal');
+
+        const matchesSearch = !search || name.includes(search) || userId.includes(search);
+        const matchesGoal = !goal || rowGoal === goal;
+
+        if (matchesSearch && matchesGoal) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    function openPlanModal(userId) {
+      const source = document.getElementById('modal-data-' + userId);
+      if (!source) return;
+      document.getElementById('modalContent').innerHTML = source.innerHTML;
+      document.getElementById('planModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePlanModal(e) {
+      document.getElementById('planModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closePlanModal();
+    });
+  </script>
+</body>
+</html>

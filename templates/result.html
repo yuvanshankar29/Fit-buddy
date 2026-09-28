@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">Fit<span>Buddy</span></div>
+      </a>
+      <div class="nav-links">
+        <span class="badge {% if not is_mock %}badge-live{% else %}badge-mock{% endif %}">
+          <span class="badge-pulse"></span>
+          {{ api_status }}
+        </span>
+        <a href="/" class="nav-link">New Plan</a>
+        <a href="/view-all-users" class="nav-link">Admin Dashboard</a>
+        <button onclick="window.print()" class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">
+          🖨️ Print Plan
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+
+    <!-- Status / Notification Banners -->
+    {% if status_message %}
+    <div class="alert alert-success">
+      <span style="font-size: 1.25rem;">✅</span>
+      <div><strong>Update:</strong> {{ status_message }}</div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-error">
+      <span style="font-size: 1.25rem;">⚠️</span>
+      <div><strong>Feedback Issue:</strong> {{ error }}</div>
+    </div>
+    {% endif %}
+
+    <!-- User Information Profile Cards -->
+    <section>
+      <div class="card-header" style="margin-bottom: 1rem;">
+        <h2 style="font-size: 1.8rem; font-weight: 800; color: #ffffff;">
+          Trainee Profile: <span class="gradient-text">{{ user.username }}</span>
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Registered User ID: <code style="color: var(--accent-primary); background: var(--bg-surface-elevated); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm);">{{ user.user_id }}</code>
+        </p>
+      </div>
+
+      <div class="profile-summary-grid">
+        <div class="profile-stat-card">
+          <div class="profile-stat-label">Full Name</div>
+          <div class="profile-stat-val">{{ user.username }}</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-label">User ID</div>
+          <div class="profile-stat-val">{{ user.user_id }}</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-label">Age</div>
+          <div class="profile-stat-val">{{ user.age }} yrs</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-label">Weight</div>
+          <div class="profile-stat-val">{{ user.weight }} kg</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-label">Fitness Goal</div>
+          <div class="profile-stat-val accent">{{ user.goal }}</div>
+        </div>
+        <div class="profile-stat-card">
+          <div class="profile-stat-label">Intensity</div>
+          <div class="profile-stat-val" style="color: var(--accent-secondary);">{{ user.intensity }}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nutrition & Recovery Section (Displayed prominently) -->
+    <section class="nutrition-card">
+      <div class="nutrition-title">
+        <span>🥗</span> NUTRITION & RECOVERY PROTOCOL
+      </div>
+      <div class="markdown-body">
+        {{ user.nutrition_tip | markdown | safe }}
+      </div>
+    </section>
+
+    <!-- Workout Plans Display Section -->
+    <section class="plan-container">
+
+      <!-- IF AN UPDATED / REVISED PLAN EXISTS -->
+      {% if user.updated_plan %}
+      <div class="plan-card revised">
+        <div class="plan-badge-wrapper">
+          <div class="plan-heading" style="color: var(--accent-secondary);">
+            ⚡ REVISED 7-DAY WORKOUT PLAN (AFTER FEEDBACK)
+          </div>
+          <span class="badge" style="background: rgba(6, 182, 212, 0.2); color: var(--accent-secondary); border: 1px solid var(--accent-secondary);">
+            REVISED & UPDATED
+          </span>
+        </div>
+
+        {% if user.feedback %}
+        <div style="background: rgba(18, 26, 47, 0.9); border-left: 4px solid var(--accent-secondary); padding: 0.9rem 1.25rem; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">
+            Applied User Request:
+          </div>
+          <div style="font-style: italic; color: #ffffff; font-size: 1rem; margin-top: 0.2rem;">
+            "{{ user.feedback }}"
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="markdown-body">
+          {{ user.updated_plan | markdown | safe }}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ORIGINAL 7-DAY WORKOUT PLAN -->
+      <div class="plan-card">
+        <div class="plan-badge-wrapper">
+          <div class="plan-heading">
+            {% if user.updated_plan %}
+              📜 ORIGINAL 7-DAY WORKOUT PLAN
+            {% else %}
+              💪 PERSONALIZED 7-DAY WORKOUT PLAN
+            {% endif %}
+          </div>
+          <span class="badge badge-live">
+            BASELINE PLAN
+          </span>
+        </div>
+
+        <div class="markdown-body">
+          {{ user.original_plan | markdown | safe }}
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Feedback & Plan Regeneration Form -->
+    <section class="feedback-box">
+      <div class="card-header">
+        <h3 class="card-title">
+          <span>🔄</span> Request Plan Adjustments & Feedback
+        </h3>
+        <p class="card-description">
+          Want changes? Tell our AI trainer your preferences. FitBuddy will preserve your overall goal ({{ user.goal }}) while adapting exercises, volume, or recovery.
+        </p>
+      </div>
+
+      <!-- Quick Suggestion Chips -->
+      <div class="preset-section">
+        <div class="preset-title">Quick Suggestion Chips:</div>
+        <div class="preset-chips">
+          <button type="button" class="chip-btn" onclick="insertFeedback('Add more cardio and endurance intervals')">
+            + Add more cardio
+          </button>
+          <button type="button" class="chip-btn" onclick="insertFeedback('Include more rest days and gentler recovery')">
+            + Include more rest days
+          </button>
+          <button type="button" class="chip-btn" onclick="insertFeedback('Add yoga and dynamic mobility sessions')">
+            + Add yoga
+          </button>
+          <button type="button" class="chip-btn" onclick="insertFeedback('Reduce workout intensity and lower set volume')">
+            + Reduce workout intensity
+          </button>
+          <button type="button" class="chip-btn" onclick="insertFeedback('Focus more on core exercises and abdominal strength')">
+            + Focus more on core exercises
+          </button>
+        </div>
+      </div>
+
+      <form id="feedbackForm" action="/submit-feedback" method="POST" onsubmit="handleFeedbackSubmit(event)">
+        <!-- Hidden user ID to bind submission directly -->
+        <input type="hidden" name="user_id" value="{{ user.user_id }}">
+
+        <div class="form-group" style="margin-top: 1rem;">
+          <label for="feedback">
+            Your Custom Instructions / Desired Modifications <span style="color: var(--accent-rose);">*</span>
+          </label>
+          <textarea
+            id="feedback"
+            name="feedback"
+            rows="3"
+            placeholder="e.g. Please swap one lifting day for swimming or yoga, and add extra core work..."
+            required
+            minlength="3"
+            maxlength="1500"
+          >{{ user.feedback or '' }}</textarea>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+          <button type="submit" id="updateBtn" class="btn btn-accent">
+            <span>⚡</span> Update Plan with AI
+          </button>
+          <a href="/" class="btn btn-secondary">
+            <span>➕</span> Generate Another Plan
+          </a>
+          <a href="/view-all-users" class="btn btn-secondary">
+            <span>👥</span> View Admin Dashboard
+          </a>
+        </div>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>FitBuddy – AI Fitness Plan Generator &copy; 2026. Built with FastAPI, SQLite, and Google Gemini.</p>
+    </div>
+  </footer>
+
+  <script>
+    function insertFeedback(text) {
+      const textarea = document.getElementById('feedback');
+      textarea.value = text;
+      textarea.focus();
+    }
+
+    function handleFeedbackSubmit(e) {
+      const btn = document.getElementById('updateBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> Regenerating Revised Plan with AI...';
+    }
+  </script>
+</body>
+</html>
